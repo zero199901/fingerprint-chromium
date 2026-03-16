@@ -1,0 +1,61 @@
+diff --git a/components/ungoogled/ungoogled_switches.cc b/components/ungoogled/ungoogled_switches.cc
+index dc2f6d0bc4..65064c602f 100644
+--- a/components/ungoogled/ungoogled_switches.cc
++++ b/components/ungoogled/ungoogled_switches.cc
+@@ -38,6 +38,9 @@ const char kFingerprintLocation[] = "fingerprint-location";
+ // Specify the timezone
+ const char kFingerprintTimezone[] = "timezone";
+
++// Specify the navigator.vendor value
++const char kFingerprintVendor[] = "fingerprint-vendor";
++
+ // Disable GPU fingerprint spoofing
+ const char kDisableGpuFingerprint[] = "disable-gpu-fingerprint";
+
+diff --git a/components/ungoogled/ungoogled_switches.h b/components/ungoogled/ungoogled_switches.h
+index 35ca6d5c12..8b6e705b27 100644
+--- a/components/ungoogled/ungoogled_switches.h
++++ b/components/ungoogled/ungoogled_switches.h
+@@ -58,6 +58,7 @@ COMPONENT_EXPORT(UNGOOGLED) extern const char kFingerprintPlatform[];
+ COMPONENT_EXPORT(UNGOOGLED) extern const char kFingerprintPlatformVersion[];
+ COMPONENT_EXPORT(UNGOOGLED) extern const char kFingerprintLocation[];
++COMPONENT_EXPORT(UNGOOGLED) extern const char kFingerprintVendor[];
+ COMPONENT_EXPORT(UNGOOGLED) extern const char kFingerprintTimezone[];
+ COMPONENT_EXPORT(UNGOOGLED) extern const char kDisableGpuFingerprint[];
+
+diff --git a/content/browser/renderer_host/render_process_host_impl.cc b/content/browser/renderer_host/render_process_host_impl.cc
+index 4ec24eef71..8e580338e0 100644
+--- a/content/browser/renderer_host/render_process_host_impl.cc
++++ b/content/browser/renderer_host/render_process_host_impl.cc
+@@ -3606,6 +3606,7 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
+       switches::kFingerprintLocation,
+       switches::kFingerprintTimezone,
+       switches::kDisableGpuFingerprint,
++      switches::kFingerprintVendor,
+       switches::kForceDeviceScaleFactor,
+       switches::kForceDisplayColorProfile,
+       switches::kForceHighContrast,
+
+diff --git a/third_party/blink/renderer/core/frame/navigator.cc b/third_party/blink/renderer/core/frame/navigator.cc
+index 37788d1e4b..49e34943a4 100644
+--- a/third_party/blink/renderer/core/frame/navigator.cc
++++ b/third_party/blink/renderer/core/frame/navigator.cc
+@@ -1120,6 +1120,18 @@ String Navigator::vendorSub() const {
+   return String();
+ }
+
++String Navigator::vendor() const {
++  const base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
++
++  if (command_line->HasSwitch(switches::kFingerprintVendor)) {
++    std::string custom_vendor = command_line->GetSwitchValueASCII(switches::kFingerprintVendor);
++    return String(custom_vendor);
++  }
++
++  // Preserve original behavior based on platform
++  return String();
++}
++
+ String Navigator::vendorSub() const {
+   const base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+   if (command_line->HasSwitch(secure_origins::kFingerprintSecureOriginVendorSub)) {
